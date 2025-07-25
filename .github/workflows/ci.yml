@@ -1,0 +1,28 @@
+name: Run Docker Compose Tests
+
+on:
+  # Run on pushes to the main branch
+  push:
+    branches: [ "main" ]
+  # Run on pull requests targeting the main branch
+  pull_request:
+    branches: [ "main" ]
+  # Allow manual runs from the Actions tab on GitHub
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the code from the repository
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Make the test script executable
+      - name: Make scripts executable
+        run: chmod +x run_tests.sh
+
+      # Step 3: Run the tests using the script
+      - name: Run Docker Compose tests
+        run: ./run_tests.sh
