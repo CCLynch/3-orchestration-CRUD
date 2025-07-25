@@ -1,0 +1,33 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "5001:5000"
+    environment:
+      # These variables tell our Flask app how to connect to the mock AWS services
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - DYNAMODB_TABLE_NAME=items
+      - S3_BUCKET_NAME=my-unique-bucket-name
+    depends_on:
+      - localstack
+
+  localstack:
+    image: localstack/localstack:latest
+    environment:
+      - SERVICES=dynamodb,s3
+      - EAGER_SERVICE_LOADING=1
+    volumes:
+      # Runs the init script when LocalStack is ready
+      - ./init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+      # Persists mock AWS data between runs for development
+      - localstack_data:/var/lib/localstack
+    ports:
+      - "4566:4566"
+
+volumes:
+  localstack_data:
