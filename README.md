@@ -33,23 +33,13 @@ chmod +x run_api.sh
 ./run_api.sh
 ```
 
+This command orchestrates a complete, isolated test run. It builds and starts the `api`, `localstack`, and `tests` containers, runs the `pytest` suite, and then automatically tears down the entire stack.
+
+The script will exit with a `0` on success and a non-zero code on failure, making it ideal for CI/CD pipelines.
+
 The API will be accessible at `http://localhost:5001`. You can then use tools like `curl` or Postman to interact with the endpoints (`/items`, `/items/<id>`).
 
 To stop the stack:
 ```bash
-docker-compose down
+docker compose down
 ```
-
-### Running the Automated Tests
-
-This command orchestrates a complete, isolated test run. It builds and starts the `api`, `localstack`, and `tests` containers, runs the `pytest` suite, and then automatically tears down the entire stack.
-
-```bash
-# Make the script executable (only needed once)
-chmod +x run_tests.sh
-
-# Run the script
-./run_tests.sh
-```
-
-The script will exit with a `0` on success and a non-zero code on failure, making it ideal for CI/CD pipelines.

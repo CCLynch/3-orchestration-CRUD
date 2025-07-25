@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Starting the application stack (API + LocalStack)..."
 
-docker-compose up --build -d
+docker compose up --build -d
 
 echo ""
 echo "API is accessible at http://localhost:5001"
