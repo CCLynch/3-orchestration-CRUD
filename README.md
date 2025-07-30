@@ -58,6 +58,11 @@ In the course of this building this repository, I referred to following resource
 
 I struggled with the orchestration of resources, consistently getting 500 responses in my tests. In hindsight this was due to a race condition in `run.py` script sending API calls to LocalStack before SQS and Lambda were ready. 
 
-I used the [Docker `healthcheck` docs](https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck), [LocalStack readiness docs](https://docs.localstack.cloud/user-guide/ci/readiness-checking/) and **[Flask Documentation](https://flask.palletsprojects.com/)**: Used to create the simple web server for the Docker Compose health check. But flawed logic in the `/health` endpoint was also creating false errors. 
+I used the [Docker `healthcheck` docs](https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck), [LocalStack readiness docs](https://docs.localstack.cloud/user-guide/ci/readiness-checking/) and **[Flask Documentation](https://flask.palletsprojects.com/)** to create the simple web server for the Docker Compose health check. But flawed logic in the `/health` endpoint was also creating false errors. 
 
 I used **[AWS CLI docs (`awslocal`)](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html)** extensively for sending test messages and checking Lambda logs and eventually found the issue with my healthcheck. 
+
+Specific articles that helped:
+* [Docker: Control startup and shutdown order in Compose](https://docs.docker.com/compose/how-tos/startup-order/) to build a more robust orchestration flow and address the race condition.
+
+* [Using Lambda with Amazon SQS](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)
