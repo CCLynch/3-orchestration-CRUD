@@ -33,36 +33,39 @@ chmod +x run_api.sh
 ./run_api.sh
 ```
 
-This command orchestrates a complete, isolated test run. It builds and starts the `api`, `localstack`, and `tests` containers, runs the `pytest` suite, and then automatically tears down the entire stack.
+The API will be accessible at `http://localhost:5001`. 
 
-The script will exit with a `0` on success and a non-zero code on failure, making it ideal for CI/CD pipelines.
-
-The API will be accessible at `http://localhost:5001`. You can then use tools like `curl` or Postman to interact with the endpoints (`/items`, `/items/<id>`).
+You can then use `curl` to interact with the endpoints (`/items`, `/items/<id>`).
 
 To stop the stack:
 ```bash
 docker compose down
 ```
 
-## Citations:
+### Running the Test Suite
 
-In the course of this building this repository, I referred to following resources:
+This command orchestrates a complete, isolated test run. It builds and starts the `api`, `localstack`, and `tests` containers, runs the `pytest` suite against the live API, and then automatically tears down the entire stack.
 
-### Docs and References
+```bash
+# Make the script executable (only needed once)
+chmod +x run_tests.sh
 
-* **[AWS SQS-Lambda Pattern](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)**
+# Run the script
+./run_tests.sh
+```
 
-* **[Boto3 - AWS SDK for Python](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)**: Used in `run.py` to create and configure AWS resources inside LocalStack
+The script will exit with a `0` on success and a non-zero code on failure, making it ideal for CI/CD pipelines.
+
+## Approach and Citations:
+
+Initially, I attempted to implement an asynchronous architecture based on the [AWS SQS-Lambda Pattern](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html) as described in [Understanding asynchronous messaging for microservices](https://aws.amazon.com/blogs/compute/understanding-asynchronous-messaging-for-microservices/). The goal was to have an API-facing Lambda publish jobs to an SQS queue, with a separate Lambda processing them. My intention was to implement this complex architecture with a simple task as practice for the final project.
+
+However, after running into significant orchestration challenges and failing tests, I pivoted to the simpler synchronous architecture used in the previous assignments, with a [Flask application](https://flask.palletsprojects.com/en/stable/tutorial/) as the API server, communicating with AWS using [Boto3](https://aws.amazon.com/sdk-for-python/).
 
 ### Troubleshooting
 
-I struggled with the orchestration of resources, consistently getting 500 responses in my tests. In hindsight this was due to a race condition in `run.py` script sending API calls to LocalStack before SQS and Lambda were ready. 
+The primary struggle was pretty simple in hindsight; a race condition where the `tests` container would start making API calls before the Flask application inside the `api` container was fully booted and ready. This resulted in connection errors and failing tests.
 
-I used the [Docker `healthcheck` docs](https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck), [LocalStack readiness docs](https://docs.localstack.cloud/user-guide/ci/readiness-checking/) and **[Flask Documentation](https://flask.palletsprojects.com/)** to create the simple web server for the Docker Compose health check. But flawed logic in the `/health` endpoint was also creating false errors. 
+Once I determined that the test errors were due to orchestration, I followed the examples in **[Docker: Control startup and shutdown order in Compose](https://docs.docker.com/compose/how-tos/startup-order/)** to build a healthcheck in the compose files. 
 
-I used **[AWS CLI docs (`awslocal`)](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html)** extensively for sending test messages and checking Lambda logs and eventually found the issue with my healthcheck. 
-
-Specific articles that helped:
-* [Docker: Control startup and shutdown order in Compose](https://docs.docker.com/compose/how-tos/startup-order/) to build a more robust orchestration flow and address the race condition.
-
-* [Using Lambda with Amazon SQS](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)
+I still ran into some issues with failing health checks that I couldn't fix, so my solution was `pytest` fixture in the test suite (`test_api.py`) to repeatedly poll the API until it received a successful response, only allowing the tests to proceed once the API was returned a 200 status code. 
